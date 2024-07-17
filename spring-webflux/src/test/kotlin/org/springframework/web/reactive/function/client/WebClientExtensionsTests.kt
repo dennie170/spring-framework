@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2021 the original author or authors.
+ * Copyright 2002-2024 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,6 +67,13 @@ class WebClientExtensionsTests {
 	}
 
 	@Test
+	fun `RequestBodySpec#bodyValueWithType with reified type parameters`() {
+		val body = mockk<List<Foo>>()
+		requestBodySpec.bodyValueWithType<List<Foo>>(body)
+		verify { requestBodySpec.bodyValue(body, object : ParameterizedTypeReference<List<Foo>>() {}) }
+	}
+
+	@Test
 	fun `ResponseSpec#bodyToMono with reified type parameters`() {
 		responseSpec.bodyToMono<List<Foo>>()
 		verify { responseSpec.bodyToMono(object : ParameterizedTypeReference<List<Foo>>() {}) }
@@ -104,6 +111,24 @@ class WebClientExtensionsTests {
 	}
 
 	@Test
+	fun `awaitExchangeOrNull returning null`() {
+		val foo = mockk<Foo>()
+		every { requestBodySpec.exchangeToMono(any<Function<ClientResponse, Mono<Foo?>>>()) } returns Mono.empty()
+		runBlocking {
+			assertThat(requestBodySpec.awaitExchangeOrNull { foo }).isEqualTo(null)
+		}
+	}
+
+	@Test
+	fun `awaitExchangeOrNull returning object`() {
+		val foo = mockk<Foo>()
+		every { requestBodySpec.exchangeToMono(any<Function<ClientResponse, Mono<Foo>>>()) } returns Mono.just(foo)
+		runBlocking {
+			assertThat(requestBodySpec.awaitExchangeOrNull { foo }).isEqualTo(foo)
+		}
+	}
+
+	@Test
 	fun exchangeToFlow() {
 		val foo = mockk<Foo>()
 		every { requestBodySpec.exchangeToFlux(any<Function<ClientResponse, Flux<Foo>>>()) } returns Flux.just(foo, foo)
@@ -133,6 +158,25 @@ class WebClientExtensionsTests {
 		every { spec.toBodilessEntity() } returns Mono.just(entity)
 		runBlocking {
 			assertThat(spec.awaitBody<Unit>()).isEqualTo(Unit)
+		}
+	}
+
+	@Test
+	fun awaitBodyOrNull() {
+		val spec = mockk<WebClient.ResponseSpec>()
+		every { spec.bodyToMono<String>() } returns Mono.just("foo")
+		runBlocking {
+			assertThat(spec.awaitBodyOrNull<String>()).isEqualTo("foo")
+		}
+	}
+
+	@Test
+	fun `awaitBodyOrNull of type Unit`() {
+		val spec = mockk<WebClient.ResponseSpec>()
+		val entity = mockk<ResponseEntity<Void>>()
+		every { spec.toBodilessEntity() } returns Mono.just(entity)
+		runBlocking {
+			assertThat(spec.awaitBodyOrNull<Unit>()).isEqualTo(Unit)
 		}
 	}
 

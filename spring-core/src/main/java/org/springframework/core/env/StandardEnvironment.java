@@ -46,6 +46,7 @@ package org.springframework.core.env;
  * variable names.
  *
  * @author Chris Beams
+ * @author Phillip Webb
  * @since 3.1
  * @see ConfigurableEnvironment
  * @see SystemEnvironmentPropertySource
@@ -60,9 +61,19 @@ public class StandardEnvironment extends AbstractEnvironment {
 	public static final String SYSTEM_PROPERTIES_PROPERTY_SOURCE_NAME = "systemProperties";
 
 
+	/**
+	 * Create a new {@code StandardEnvironment} instance with a default
+	 * {@link MutablePropertySources} instance.
+	 */
 	public StandardEnvironment() {
 	}
 
+	/**
+	 * Create a new {@code StandardEnvironment} instance with a specific
+	 * {@link MutablePropertySources} instance.
+	 * @param propertySources property sources to use
+	 * @since 5.3.4
+	 */
 	protected StandardEnvironment(MutablePropertySources propertySources) {
 		super(propertySources);
 	}
